@@ -3,7 +3,7 @@
 echo -e "\033[0;32mDeploying updates to GitHub...\033[0m"
 
 # tambahkan perubahan ke Git
-git add .
+git add -A
 
 # Buat sebuah commit baru
 msg="rebuilding site `date`"
