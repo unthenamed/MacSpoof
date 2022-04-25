@@ -1,0 +1,44 @@
+#!/bin/bash
+
+nat=nat0
+interface=wlan0
+forward=wlan1
+
+while getopts ":i:c:f:" OPTION
+do
+  case $OPTION in
+    i)
+      interface="$OPTARG";;
+    c)
+      nat="$OPTARG";;
+    f)
+      forward="$OPTARG";;
+  esac
+done
+
+nat0(){
+iptables -t nat -A POSTROUTING -o $interface -j MASQUERADE
+echo " [ $interface ] use to NAT "
+}
+
+nat1(){
+iptables -t nat -A POSTROUTING -o $interface -j MASQUERADE
+iptables -A FORWARD -i $interface -o $forward -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A FORWARD -i $forward -o $interface -j ACCEPT
+
+echo " [ $interface ] use to NAT "
+echo " [ $forward ] use to Forward "
+}
+
+reset(){
+iptables -P INPUT ACCEPT
+iptables -P FORWARD ACCEPT
+iptables -P OUTPUT ACCEPT
+iptables -t nat -F
+iptables -t mangle -F
+iptables -F
+iptables -X
+echo " [ $nat ] Iptables reset "
+}
+
+$nat
