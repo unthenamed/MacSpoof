@@ -1,0 +1,14 @@
+#!/usr/bin/bash
+
+function macsort() {
+macfile="mac.txt"
+mac1="$(cat $macfile | awk '/:/ {print $1}'| grep -i ':')"
+mac2="$(cat $macfile | awk '/:/ {print $2}'| grep -i ':')"
+mac3="$(cat $macfile | awk '/:/ {print $3}'| grep -i ':')"
+mac4="$(cat $macfile | awk '/:/ {print $4}'| grep -i ':')"
+mac5="$(cat $macfile | awk '/:/ {print $5}'| grep -i ':')"
+macout="$(echo "$mac1" "$mac2" "$mac3" "$mac4" "$mac5")"
+rm $macfile
+echo $macout | tr -s '[:space:]' '\n' | sort | uniq >> $macfile
+}
+macsort

@@ -1,0 +1,15 @@
+[Unit]
+Description=macspoof
+After=network.target
+Wants=network.target
+
+[Service]
+User=root
+Type=oneshot
+RemainAfterExit=yes
+# there must be spaces before and after semicolons
+ExecStart=/usr/bin/bash /home/admin0/MacSpoof/spoof
+ExecStop=/sbin/iptables -t mangle -F
+
+[Install]
+WantedBy=multi-user.target

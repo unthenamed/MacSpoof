@@ -1,9 +1,12 @@
 #!/usr/bin/bash
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-killall spoof
+killall spoof > /dev/null
 
-defaultiface="wlan0"
-defaultssid="Android_WIF1"
+defaultiface="wlxe8de2719159a"
+defaultssid="RIZIK_WIFI"
+MAC="/home/admin0/MacSpoof/stable.txt"
+macalive="/home/admin0/MacSpoof/macalive.txt"
+usbdevice="ralink"
 # =========================================================================== #
 #           FILE:  spoof                                                      #
 #          USAGE:  sudo spoof	           	                              #
@@ -30,14 +33,24 @@ function root() {
 	fi
 }
 
+function macprase() {
+macfile="$MAC"
+mac1="$(cat $macfile | awk '/:/ {print $1}'| grep -i ':')"
+mac2="$(cat $macfile | awk '/:/ {print $2}'| grep -i ':')"
+mac3="$(cat $macfile | awk '/:/ {print $3}'| grep -i ':')"
+mac4="$(cat $macfile | awk '/:/ {print $4}'| grep -i ':')"
+mac5="$(cat $macfile | awk '/:/ {print $5}'| grep -i ':')"
+macout="$(echo "$mac1" "$mac2" "$mac3" "$mac4" "$mac5")"
+rm $macfile
+echo $macout | tr -s '[:space:]' '\n' | sort | uniq >> $macfile
+}
+macprase
 
 ## Find the initial parameters of wireless interface.
 function device() {
 interface="$(ip -o -4 route show to default | awk '/dev/ {print $5}' | awk '{print $1}')" 
 wifissid="$(iw dev "$interface" link | awk '/SSID/ {print $NF}')" 
-MAC="/bin/maclist.txt"
 }
-
 device >/dev/null
 
 clear
@@ -48,13 +61,13 @@ if [[ "$interface" = $(echo) ]]; then
 	echo " # Using default interface" "$defaultiface" "?"
         echo " # And Wifi SSID" "$wifissid" "?"
 	echo " Press any Key to continue or CTRL + Z to cancel and CTRL + C to change "
-	read
+sleep 3 #	read
 else
         toilet $(echo "MacSpoof")
 	echo " # Using interface" "$interface" "?"
 	echo " # And Wifi SSID" "$wifissid" "?"
         echo " Press any Key to continue or CTRL + C to cancel"
-	read
+sleep 3 #	read
 fi
 
 ## Option  parameters of wireless interface.
@@ -87,71 +100,84 @@ function load() {
 }
 
 ## Status connection network
-
 function status() {
 clear
-echo "                       "$status"                        "
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-echo "Interface         :" "$interface"
-echo "Wifi SSID         :" "$wifissid"
-echo "ID Member	  :" "$id"
-echo "DNS Server        :" "$dns"
-echo "Gateway           :" "$gateway"
-echo "IP address        :" "$localip"
-echo "MAC address       :" "$macaddress"
-echo "Date              :" $(date)
-echo ""
-echo "Status ~"
+echo "                   "$status"                     "
+echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+echo "	  ID Member :" "$id"
+echo "          Interface :" "$interface"
+echo "          Wifi SSID :" "$wifissid"
+echo "         DNS Server :" "$dns"
+echo "        MAC address :" "$macaddress"
+echo "         IP address :" "$localip"
+echo "            Gateway :" "$gateway"
+echo "           Download :" "$download"
+echo "             Upload :" "$upload"
+echo "              Date  :" $(date +%T)
+#echo " "
+
 }
 
 ## IF connection offline/online
 function online() {
                 status="ONLINE"
 printf '%s\n' "$(clear ; status)"
-                echo "		Download " "$download"
-                echo "         	Upload	 " "$upload"
+
+                
+#                echo "$macaddress" >> $macalive
+#                macalive0="$(cat "$macalive" | grep -i ':')"
+#		rm $macalive
+#                echo $macalive0 | tr -s '[:space:]' '\n' | sort | uniq >> $macalive
 }
+
 function offline() {
-printf '%s\n' "$(clear ; status)"
+		printf '%s\n' "$(clear ; status)"
+                echo "[#] Menyambungkan koneksi ......"
+                
+		echo -ne '[#] #####                                 (15%)\r'
+		#__set_random_hostname     
+		echo -ne '[-] ###############                       (45%)\r'  
+	        usbr="$(lsusb | grep -i "ralink" | awk '/ / {print "usbreset /dev/bus/usb/"$2"/"$4}' | cut -d ":" -f 1)"
+	        $usbr >/dev/null
+	        echo -ne '[|] ###############                       (45%)\r'
+	        sleep 1
+	        echo -ne '[/] ####################                  (55%)\r'
                 nmcli connection down "$wifissid" >/dev/null 
-                echo "Koneksi terputus"
+                echo -ne '[-] #########################             (75%)\r'
                 nmcli connection modify "$wifissid" wifi.cloned-mac-address $M  >/dev/null
-                echo "Menyambungkan koneksi ......"
+                echo -ne '[\] ##############################        (85%)\r'
                 nmcli connection up "$wifissid" >/dev/null
-		relogin >/dev/null
+                echo -ne '[-] ###################################   (100%)\r'
+                echo -ne '\n'
+		#relogin >/dev/null
 }
 
 ## Test internet access
 function check() {
-ping -c1 -w10 8.8.8.8 >/dev/null
+wget -q --spider http://google.com --timeout 1 >/dev/null
       if [[ $? -eq 0 ]]; then
-
+		load
 		online
+		sleep 3
+		check
 	else
 		offline
 	fi
 }
 
+
 # Use Ctrl + C to force change mac again
 control_c() {
 #	nmcli connection up "$wifissid"
+	#sudo systemctl restart NetworkManager
 	offline
 	trap 0
 }
 
+
 ## Relogin in userpage
 function relogin() {
-		         		 
-curl --data "username=ndaa&password=ndaa" aysila.net/login.html --connect-timeout 1 --silent  
-curl --data "username=ayah&password=ayah" aysila.net/login.html --connect-timeout 1 --silent
-curl --data "username=bunda&password=bunda" aysila.net/login.html --connect-timeout 1 --silent
-curl --data "username=dede&password=dede" aysila.net/login.html --connect-timeout 1 --silent
-curl --data "username=aysila&password=aysila" aysila.net/login.html --connect-timeout 1 --silent
-curl --data "username=aysila1&password=aysila1" aysila.net/login.html --connect-timeout 1 --silent
-curl --data "username=user1&password=user1" aysila.net/login.html --connect-timeout 1 --silent
-curl --data "username=user2&password=user2" aysila.net/login.html --connect-timeout 1  --silent
-curl --data "username=sila&password=sila" aysila.net/login.html --connect-timeout 1 --silent
-
+curl --data "username=$voucher&password=$voucher" $gateway/login.html --connect-timeout 1 --silent
 }
 
 ## Change Mac for changing
@@ -161,18 +187,31 @@ function change() {
 		if [[ "${M:0:1}" != "#" ]]
 		then
  			trap control_c SIGINT
-			sleep 1
+			sleep 2
 			load >/dev/null
 			check
 		fi
 	done
 }
 
+
+## Random Hostname for dhcp Leases
+__set_random_hostname() {
+  new_hostname=$(echo "V$(head -n1 < <(fold -w4 < <(tr -cd '0-9' < /dev/urandom)))")
+  # set new hostname
+  hostnamectl set-hostname "$new_hostname"
+  # set new hostname in /etc/hosts
+  sed -i "2 s/^.*$/127.0.1.1       $new_hostname/g" /etc/hosts
+}
+
+
 ## Main and Looping
 function main() {
 while :
 do
 	change
+	sudo systemctl restart NetworkManager
+
 done
 }
 
