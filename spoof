@@ -5,7 +5,7 @@ killall spoof > /dev/null
 defaultiface="wlxe8de2719159a"
 defaultssid="RIZIK_WIFI"
 MAC="/home/admin0/MacSpoof/stable.txt"
-macalive="/home/admin0/MacSpoof/macalive.txt"
+macalive="/home/admin0/MacSpoof/macid.txt"
 usbdevice="ralink"
 # =========================================================================== #
 #           FILE:  spoof                                                      #
@@ -118,16 +118,28 @@ echo "              Date  :" $(date +%T)
 
 }
 
+## IF connection online save the mac
+function savemac() {
+                echo "$macaddress" >> $macalive
+                macalive0="$(cat "$macalive" | grep -i ':')"
+		rm $macalive
+                echo $macalive0 | tr -s '[:space:]' '\n' | sort | uniq >> $macalive
+}
+
+function savemacid() {
+                echo "$macaddress $id">> $macalive
+}
+
+## Relogin in userpage
+function relogin() {
+curl --data "username=$voucher&password=$voucher" $gateway/login.html --connect-timeout 1 --silent
+}
+
 ## IF connection offline/online
 function online() {
                 status="ONLINE"
-printf '%s\n' "$(clear ; status)"
-
-                
-#                echo "$macaddress" >> $macalive
-#                macalive0="$(cat "$macalive" | grep -i ':')"
-#		rm $macalive
-#                echo $macalive0 | tr -s '[:space:]' '\n' | sort | uniq >> $macalive
+		printf '%s\n' "$(clear ; status)"
+		#savemacid
 }
 
 function offline() {
@@ -135,7 +147,7 @@ function offline() {
                 echo "[#] Menyambungkan koneksi ......"
                 
 		echo -ne '[#] #####                                 (15%)\r'
-		#__set_random_hostname     
+		__set_random_hostname     
 		echo -ne '[-] ###############                       (45%)\r'  
 	        usbr="$(lsusb | grep -i "ralink" | awk '/ / {print "usbreset /dev/bus/usb/"$2"/"$4}' | cut -d ":" -f 1)"
 	        $usbr >/dev/null
@@ -160,6 +172,7 @@ wget -q --spider http://google.com --timeout 1 >/dev/null
 		online
 		sleep 3
 		check
+		#offline
 	else
 		offline
 	fi
@@ -168,17 +181,14 @@ wget -q --spider http://google.com --timeout 1 >/dev/null
 
 # Use Ctrl + C to force change mac again
 control_c() {
-#	nmcli connection up "$wifissid"
-	#sudo systemctl restart NetworkManager
+	nmcli connection up "$wifissid"
+	sudo systemctl restart NetworkManager
 	offline
 	trap 0
 }
 
 
-## Relogin in userpage
-function relogin() {
-curl --data "username=$voucher&password=$voucher" $gateway/login.html --connect-timeout 1 --silent
-}
+
 
 ## Change Mac for changing
 function change() {
