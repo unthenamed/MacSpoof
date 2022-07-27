@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
 function macsort() {
-macfile="stable.txt"
+macfile="macscan.txt"
 mac1="$(cat $macfile | awk '/:/ {print $1}'| grep -i ':')"
 mac2="$(cat $macfile | awk '/:/ {print $2}'| grep -i ':')"
 mac3="$(cat $macfile | awk '/:/ {print $3}'| grep -i ':')"
